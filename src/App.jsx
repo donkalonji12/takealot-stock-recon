@@ -356,6 +356,7 @@ export default function App() {
                         <EditInvoiceForm
                             data={invoiceData}
                             onChange={setInvoiceData}
+                            parsedState={parsedState}
                             onBack={() => setCurrentStep(1)}
                             onContinue={() => setCurrentStep(3)}
                         />

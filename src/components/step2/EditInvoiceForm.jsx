@@ -16,7 +16,7 @@ const InputField = ({ label, name, type = 'text', required, placeholder, value, 
     </div>
 );
 
-export default function EditInvoiceForm({ data, onChange, onContinue, onBack }) {
+export default function EditInvoiceForm({ data, parsedState, onChange, onContinue, onBack }) {
     const [error, setError] = useState('');
 
     const handleInputChange = (e) => {
@@ -53,6 +53,40 @@ export default function EditInvoiceForm({ data, onChange, onContinue, onBack }) 
                 </div>
 
                 <div className="p-10">
+                    {/* Takealot Billing Details */}
+                    <div className="mb-12 border border-[#e5e5ea] rounded-3xl overflow-hidden bg-white shadow-sm">
+                        <div className="flex items-center justify-between px-8 py-5 border-b border-[#e5e5ea]">
+                            <h3 className="text-[15px] font-semibold text-[#4f86f7]">Takealot Billing Details</h3>
+                            <span className="text-[12px] font-bold text-[#4f86f7] uppercase tracking-wider">Recipient</span>
+                        </div>
+                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div>
+                                <label className="block text-[13px] font-semibold text-[#6e6e73] tracking-wide mb-2 uppercase">Takealot VAT Number</label>
+                                <div className="w-full bg-[#fbfbfd] border border-[#d2d2d7] rounded-xl px-4 py-3.5 text-sm text-[#1d1d1f] shadow-sm select-all">
+                                    4470208333
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[13px] font-semibold text-[#6e6e73] tracking-wide mb-2 uppercase">Takealot Registration Number</label>
+                                <div className="w-full bg-[#fbfbfd] border border-[#d2d2d7] rounded-xl px-4 py-3.5 text-sm text-[#1d1d1f] shadow-sm select-all">
+                                    2010/020248/07
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[13px] font-semibold text-[#6e6e73] tracking-wide mb-2 uppercase">Takealot Tax Reference Number</label>
+                                <div className="w-full bg-[#fbfbfd] border border-[#d2d2d7] rounded-xl px-4 py-3.5 text-sm text-[#1d1d1f] shadow-sm select-all">
+                                    9910006148
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[13px] font-semibold text-[#6e6e73] tracking-wide mb-2 uppercase">Takealot Physical Address</label>
+                                <div className="w-full bg-[#fbfbfd] border border-[#d2d2d7] rounded-xl px-4 py-3.5 text-sm text-[#1d1d1f] shadow-sm select-all whitespace-nowrap overflow-hidden text-ellipsis">
+                                    12th Floor, 10 Rua Vasco Da Gama Plain, Foreshore, Cape Town
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Section A: Business Details */}
                     <div className="mb-12">
                         <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-6 border-b border-[#e5e5ea] pb-2">Business Details</h3>
@@ -119,6 +153,151 @@ export default function EditInvoiceForm({ data, onChange, onContinue, onBack }) 
                             </div>
                         </div>
                     </div>
+
+                    {parsedState && parsedState.data && parsedState.matchedColumns && (
+                        <div className="mb-12">
+                            <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-6 border-b border-[#e5e5ea] pb-2">Line Items & Financial Totals</h3>
+
+                            <div className="mb-8 border border-[#e5e5ea] rounded-2xl overflow-hidden bg-white p-8 shadow-sm">
+                                <h4 className="text-[13px] font-bold text-[#1d1d1f] uppercase tracking-wider mb-6">Line Items</h4>
+                                <div className="space-y-4">
+                                    {parsedState.data.filter(r => r._numericClaim > 0).map((item, idx) => {
+                                        const override = data.lineItemOverrides && data.lineItemOverrides[idx] ? data.lineItemOverrides[idx] : null;
+                                        const qty = override && override.qty !== undefined ? override.qty : 1;
+                                        const rate = override && override.rate !== undefined ? override.rate : (item._numericClaim || 0);
+
+                                        return (
+                                            <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between border border-[#e5e5ea] rounded-xl p-5 bg-white relative hover:border-[#d2d2d7] transition-colors">
+                                                <div className="flex-1 mb-4 md:mb-0 md:mr-6">
+                                                    <h5 className="text-[14px] font-bold text-[#1d1d1f] mb-1">{parsedState.matchedColumns.productTitle ? item[parsedState.matchedColumns.productTitle] : 'Unknown Product'}</h5>
+                                                    <p className="text-[11px] text-[#6e6e73] font-medium uppercase tracking-tight">
+                                                        TSIN: {parsedState.matchedColumns.tsin ? item[parsedState.matchedColumns.tsin] : 'N/A'} • SKU: {parsedState.matchedColumns.sku ? item[parsedState.matchedColumns.sku] : 'N/A'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">Qty</label>
+                                                        <div className="flex items-center border border-[#d2d2d7] rounded-xl overflow-hidden bg-[#fbfbfd]">
+                                                            <input
+                                                                type="number"
+                                                                className="w-16 px-3 py-2 text-sm font-semibold text-[#1d1d1f] focus:outline-none text-center bg-transparent"
+                                                                value={qty}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    onChange(prev => {
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), qty: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <div className="flex flex-col border-l border-[#d2d2d7] bg-[#f5f5f7]">
+                                                                <button onClick={() => {
+                                                                    onChange(prev => {
+                                                                        const val = Number(qty) + 1;
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), qty: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }} className="px-2 py-0.5 hover:bg-[#e5e5ea] border-b border-[#d2d2d7] text-[#6e6e73]">
+                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                                                                </button>
+                                                                <button onClick={() => {
+                                                                    onChange(prev => {
+                                                                        const val = Math.max(0, Number(qty) - 1);
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), qty: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }} className="px-2 py-0.5 hover:bg-[#e5e5ea] text-[#6e6e73]">
+                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">Unit Rate</label>
+                                                        <div className="flex items-center border border-[#d2d2d7] rounded-xl overflow-hidden bg-[#fbfbfd]">
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                className="w-24 px-3 py-2 text-sm font-semibold text-[#1d1d1f] focus:outline-none bg-transparent"
+                                                                value={rate}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    onChange(prev => {
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), rate: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <div className="flex flex-col border-l border-[#d2d2d7] bg-[#f5f5f7]">
+                                                                <button onClick={() => {
+                                                                    onChange(prev => {
+                                                                        const val = (Number(rate) + 0.1).toFixed(2);
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), rate: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }} className="px-2 py-0.5 hover:bg-[#e5e5ea] border-b border-[#d2d2d7] text-[#6e6e73]">
+                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                                                                </button>
+                                                                <button onClick={() => {
+                                                                    onChange(prev => {
+                                                                        const val = Math.max(0, Number(rate) - 0.1).toFixed(2);
+                                                                        const overrides = { ...prev.lineItemOverrides };
+                                                                        overrides[idx] = { ...(overrides[idx] || {}), rate: val };
+                                                                        return { ...prev, lineItemOverrides: overrides };
+                                                                    });
+                                                                }} className="px-2 py-0.5 hover:bg-[#e5e5ea] text-[#6e6e73]">
+                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-[13px] font-bold text-[#6e6e73] tracking-wider mb-2 uppercase">Custom Subtotal Override</label>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            name="subtotalOverride"
+                                            placeholder="e.g. 7066.64"
+                                            value={data.subtotalOverride || ''}
+                                            onChange={handleInputChange}
+                                            className="w-full sm:w-[300px] bg-[#fbfbfd] border-2 border-[#4f86f7]/60 rounded-xl px-4 py-3.5 pr-10 text-sm font-semibold text-[#1d1d1f] shadow-sm focus:outline-none focus:ring-0 focus:border-[#4f86f7]"
+                                        />
+                                        <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-center gap-0.5 px-1 pb-0.5">
+                                            <button onClick={() => {
+                                                const current = Number(data.subtotalOverride || 0);
+                                                onChange(prev => ({ ...prev, subtotalOverride: (current + 1).toFixed(2) }));
+                                            }} className="text-[#6e6e73] hover:text-[#1d1d1f]">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                                            </button>
+                                            <button onClick={() => {
+                                                const current = Number(data.subtotalOverride || 0);
+                                                onChange(prev => ({ ...prev, subtotalOverride: Math.max(0, current - 1).toFixed(2) }));
+                                            }} className="text-[#6e6e73] hover:text-[#1d1d1f]">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-[12px] text-[#6e6e73] flex-1 tracking-tight">
+                                        Leave blank to use the automatically calculated subtotal from the line items above.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Section D: Notes */}
                     <div>

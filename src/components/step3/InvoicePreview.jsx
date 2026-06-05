@@ -33,7 +33,17 @@ export default function InvoicePreview({ invoiceData, parsedData, matchedColumns
         ? claimableItems[0][matchedColumns.period]
         : 'Not provided';
 
-    const subtotal = stats.totalClaimValue;
+    let calculatedSubtotal = 0;
+    claimableItems.forEach((item, idx) => {
+        const override = invoiceData.lineItemOverrides && invoiceData.lineItemOverrides[idx] ? invoiceData.lineItemOverrides[idx] : null;
+        const itemQty = override && override.qty !== undefined ? Number(override.qty) : 1;
+        const itemRate = override && override.rate !== undefined ? Number(override.rate) : (Number(item._numericClaim) || 0);
+        calculatedSubtotal += itemQty * itemRate;
+    });
+
+    const subtotal = (invoiceData.subtotalOverride && invoiceData.subtotalOverride !== '')
+        ? Number(invoiceData.subtotalOverride)
+        : calculatedSubtotal;
     const isVatRegistered = invoiceData.vatStatus === 'VAT Registered';
     const vatAmount = isVatRegistered ? subtotal * 0.15 : 0;
     const total = subtotal + vatAmount;
@@ -183,8 +193,9 @@ export default function InvoicePreview({ invoiceData, parsedData, matchedColumns
                                         <p>12th Floor, 10 Rua Vasco Da Gama Plain</p>
                                         <p>Foreshore, Cape Town - 8000</p>
                                         <div className="pt-2">
-                                            <p><span className="font-semibold">VAT:</span> 4480252119</p>
+                                            <p><span className="font-semibold">VAT:</span> 4470208333</p>
                                             <p><span className="font-semibold">Reg:</span> 2010/020248/07</p>
+                                            <p><span className="font-semibold">Tax Ref:</span> 9910006148</p>
                                         </div>
                                     </div>
                                 </div>
@@ -213,9 +224,12 @@ export default function InvoicePreview({ invoiceData, parsedData, matchedColumns
                                     </thead>
                                     <tbody>
                                         {claimableItems.map((item, idx) => {
-                                            const itemRate = Number(item._numericClaim) || 0;
-                                            const itemVAT = isVatRegistered ? itemRate * 0.15 : 0;
-                                            const itemTotal = itemRate + itemVAT;
+                                            const override = invoiceData.lineItemOverrides && invoiceData.lineItemOverrides[idx] ? invoiceData.lineItemOverrides[idx] : null;
+                                            const itemQty = override && override.qty !== undefined ? Number(override.qty) : 1;
+                                            const itemRate = override && override.rate !== undefined ? Number(override.rate) : (Number(item._numericClaim) || 0);
+                                            const itemTotalPreVAT = itemQty * itemRate;
+                                            const itemVAT = isVatRegistered ? itemTotalPreVAT * 0.15 : 0;
+                                            const itemTotal = itemTotalPreVAT + itemVAT;
 
                                             return (
                                                 <tr key={idx} className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#FDFDFD]">
@@ -227,7 +241,7 @@ export default function InvoicePreview({ invoiceData, parsedData, matchedColumns
                                                             SKU: {matchedColumns.sku ? item[matchedColumns.sku] : 'N/A'} • TSIN: {matchedColumns.tsin ? item[matchedColumns.tsin] : 'N/A'}
                                                         </div>
                                                     </td>
-                                                    <td className="py-5 px-5 align-top text-center text-[14px] text-[#4B5563] font-semibold">1</td>
+                                                    <td className="py-5 px-5 align-top text-center text-[14px] text-[#4B5563] font-semibold">{itemQty}</td>
                                                     <td className="py-5 px-5 align-top text-right text-[14px] text-[#4B5563] font-medium tabular-nums whitespace-nowrap">
                                                         {formatCurrency(itemRate)}
                                                     </td>
